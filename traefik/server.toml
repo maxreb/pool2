@@ -1,0 +1,7 @@
+loglevel = "DEBUG"
+
+[backends]
+	##Drops 
+		[backends.drops]
+			[backends.drops.servers.servers1]
+			url = "http://drops.docker.local:9000"

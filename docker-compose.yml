@@ -1,0 +1,78 @@
+version: '3'
+
+services:
+  traefik:
+    image: traefik
+    ports:
+      - 80:80
+      - 8080:8080
+    volumes:
+      - ./traefik/traefik.toml:/etc/traefik/traefik.toml 
+      - ./traefik/server.toml:/etc/traefik/server.toml 
+      - /var/run/docker.sock:/var/run/docker.sock 
+    networks:
+      - pool-network
+  mailserver:
+    image: mwader/postfix-relay
+    environment:
+      - POSTFIX_myhostname=vca.informatik.hu-berlin.de
+    networks:
+      - pool-network
+  mongodb:
+    image: mongo:latest
+  mariadb:
+    image: mariadb:latest
+    environment: 
+      - MYSQL_ROOT_PASSWORD=drops
+      - MYSQL_DATABASE=drops
+      - MYSQL_USER=drops
+      - MYSQL_PASSWORD=drops
+      - MYSQL_ROOT_PASSWORD=yes
+    networks:
+      - pool-network
+  mysql:
+    image: mysql:5.7
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+    networks:
+      - pool-network
+  #pool1:
+  #  image: vivaconagua/pool1-docker:latest
+  #  environment:
+  #    - WORDPRESS_DB_HOST=mysql
+  #    - WORDPRESS_DB_USER=root
+  #    - WORDPRESS_DB_PASSWORD=root
+  #    - WORDPRESS_DB_NAME=db175370026
+  #    - WORDPRESS_DB_TABLE_PREFIX=vca1312
+  #  networks:
+  #    - pool-network
+  sluice:
+    image: vivaconagua/sluice:latest
+  dispenser:
+    image: vivaconagua/dispenser:0.1.13-dev #todo: add versions
+    restart: always
+    #-Dplay.evolutions.db.default.autoApply=true \
+    #-Dconfig.resource=application.conf \
+    #-Dplay.http.context="/dispenser"; 
+    networks:
+      - pool-network
+  drops:
+    image: vivaconagua/drops:0.19.13 
+    restart: always
+    depends_on:
+      - mongodb
+      - mariadb
+    command:
+      #- -Dplay.crypto.secret=$drops_secret
+      - -Dplay.evolutions.db.default.autoApply=true -Dconfig.resource=application.conf -Dplay.http.context="/drops" -Dlogin.flow.ms.switch=true -Dlogin.flow.ms.url=https://vca.informatik.hu-berlin.de/pool -Dmongodb.uri=mongodb://mongo/drops -Dslick.dbs.default.db.url=jdbc:mysql://mariadb/drops -Dslick.dbs.default.db.user=drops -Dslick.dbs.default.db.password=drops -Dmail.smtp.host=mailserver:25 -Dplay.mailer.mock=no -Dplay.mailer.host=mailbox.informatik.hu-berlin.de 
+      #- -Dplay.mailer.user=$smtp_user 
+      #- -Dplay.mailer.password=$smtp_password 
+    volumes:
+      - ./drops/:/conf/
+      - ./drops/application.conf:/conf/application.conf
+    networks:
+      - pool-network
+volumes:
+  drops_conf:
+networks:
+  pool-network:
