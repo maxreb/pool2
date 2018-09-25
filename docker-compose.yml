@@ -20,6 +20,8 @@ services:
       - pool-network
   mongodb:
     image: mongo:latest
+    networks:
+      - pool-network
   mariadb:
     image: mariadb:latest
     environment: 
@@ -59,20 +61,19 @@ services:
   drops:
     image: vivaconagua/drops:0.19.13 
     restart: always
+    ports:
+      - 9000:9000
     depends_on:
       - mongodb
       - mariadb
-    command:
-      #- -Dplay.crypto.secret=$drops_secret
-      - -Dplay.evolutions.db.default.autoApply=true -Dconfig.resource=application.conf -Dplay.http.context="/drops" -Dlogin.flow.ms.switch=true -Dlogin.flow.ms.url=https://vca.informatik.hu-berlin.de/pool -Dmongodb.uri=mongodb://mongo/drops -Dslick.dbs.default.db.url=jdbc:mysql://mariadb/drops -Dslick.dbs.default.db.user=drops -Dslick.dbs.default.db.password=drops -Dmail.smtp.host=mailserver:25 -Dplay.mailer.mock=no -Dplay.mailer.host=mailbox.informatik.hu-berlin.de 
-      #- -Dplay.mailer.user=$smtp_user 
+    #command: -Dplay.evolutions.db.default.autoApply=true -Dconfig.resource=application.conf -Dplay.http.context="/drops" -Dlogin.flow.ms.switch=true -Dlogin.flow.ms.url=https://vca.informatik.hu-berlin.de/pool -Dmongodb.uri=mongodb://mongo/drops -Dslick.dbs.default.db.url=jdbc:mysql://mariadb/drops -Dslick.dbs.default.db.user=drops -Dslick.dbs.default.db.password=drops -Dmail.smtp.host=mailserver:25 -Dplay.mailer.mock=no -Dplay.mailer.host=mailbox.informatik.hu-berlin.de 
+    command: -Dplay.crypto.secret=$drops_secret -Dplay.evolutions.db.default.autoApply=true -Dconfig.resource=application.conf -Dplay.http.context="/drops" -Dlogin.flow.ms.switch=true -Dlogin.flow.ms.url=https://vca.informatik.hu-berlin.de/pool -Dmongodb.uri=mongodb://mongo/drops -Dslick.dbs.default.db.url=jdbc:mysql://mariadb/drops -Dslick.dbs.default.db.user=drops -Dslick.dbs.default.db.password=drops -Dmail.smtp.host=mail:25 -Dplay.mailer.mock=no -Dplay.mailer.host=mailbox.informatik.hu-berlin.de -Dplay.mailer.user=$smtp_user -Dplay.mailer.password=$smtp_password 
+        #- -Dplay.mailer.user=$smtp_user 
       #- -Dplay.mailer.password=$smtp_password 
     volumes:
-      - ./drops/:/conf/
-      - ./drops/application.conf:/conf/application.conf
+      #- ./drops:/opt/docker/conf
+      - ${PWD}/drops/application.conf:/opt/docker/conf/application.conf
     networks:
       - pool-network
-volumes:
-  drops_conf:
 networks:
   pool-network:
